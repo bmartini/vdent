@@ -33,9 +33,9 @@ CXX = g++
 
 # What include flags to pass to the compiler
 ifeq ($(MODE),debug)
-    INCLUDEFLAGS= -DMACOSX 
+    INCLUDEFLAGS=
 else
-    INCLUDEFLAGS= -DMACOSX 
+    INCLUDEFLAGS=
 endif
 
 
