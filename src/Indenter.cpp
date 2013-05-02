@@ -11,7 +11,6 @@
 #include <cstring>
 #include <stdlib.h>
 
-using namespace std;
 
 #define IS_NAME_CHAR(x) (isalnum((x)) || ((x) == '.') || ((x) == '_') || ((x) == '$') || ((x) == '`'))
 #define IS_WHITE_SPACE(x) (((x) == ' ') || ((x) == '\t'))
@@ -49,7 +48,7 @@ void Indenter::process(std::istream *in, std::ostream *out)
 
 int Indenter::compare_kw_token(const void * a , const void * b)
 {
-	const string buffer = *((string *) a);
+	const std::string buffer = *((std::string *) a);
 	const token kw_token = *((token *) b);
 
 	size_t bf_length = buffer.length();
@@ -73,7 +72,7 @@ int Indenter::compare_kw_token(const void * a , const void * b)
  */
 token Indenter::id_keyword(char *ch)
 {
-	string buffer;
+	std::string buffer;
 	int bf_length;
 
 	if (IS_WHITE_SPACE(*ch) || is_eol(*ch)) {

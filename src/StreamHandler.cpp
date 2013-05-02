@@ -8,9 +8,6 @@
 #include "StreamHandler.h"
 
 
-using namespace std;
-
-
 StreamHandler::StreamHandler(std::istream *in, std::ostream *out)
 {
 	in_stream = in;
@@ -120,7 +117,7 @@ size_t StreamHandler::position()
 }
 
 
-void StreamHandler::append(string addition)
+void StreamHandler::append(std::string addition)
 {
 	sbuffer.append(addition);
 }

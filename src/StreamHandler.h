@@ -11,7 +11,6 @@
 #include <iostream>
 #include <string>
 
-using namespace std;
 
 class StreamHandler
 {
@@ -33,7 +32,7 @@ public:
 	void prev_remove();
 	char prev_peek();
 
-	void append(string addition);
+	void append(std::string addition);
 	void travel_to(size_t position, char *ch);
 	size_t position();
 
@@ -42,7 +41,7 @@ private:
 	std::istream * in_stream;
 	std::ostream * out_stream;
 
-	string sbuffer;
+	std::string sbuffer;
 };
 
 

@@ -13,7 +13,6 @@
 #include "StreamHandler.h"
 #include "KeywordToken.h"
 
-using namespace std;
 
 class Indenter
 {
