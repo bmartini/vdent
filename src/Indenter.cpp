@@ -8,7 +8,8 @@
 #include "Indenter.h"
 
 #include <stack>
-#include <string>
+#include <cstring>
+#include <stdlib.h>
 
 using namespace std;
 
