@@ -6,6 +6,7 @@
  */
 
 #include "StreamHandler.h"
+#include <iostream>
 
 
 StreamHandler::StreamHandler(std::istream *in, std::ostream *out)

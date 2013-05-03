@@ -8,8 +8,10 @@
 #ifndef STREAM_HANDLER_H
 #define STREAM_HANDLER_H
 
-#include <iostream>
+
 #include <string>
+class istream;
+class ostream;
 
 
 class StreamHandler

@@ -1,8 +1,9 @@
+#include "Indenter.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
 #include <getopt.h>
-#include "Indenter.h"
 
 
 int main(int argc, char* argv[])
