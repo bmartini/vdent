@@ -15,8 +15,9 @@
 #define IS_NAME_CHAR(x) (isalnum((x)) || ((x) == '.') || ((x) == '_') || ((x) == '$') || ((x) == '`'))
 #define IS_WHITE_SPACE(x) (((x) == ' ') || ((x) == '\t'))
 
-Indenter::Indenter()
+Indenter:: Indenter(std::string indent_str)
 {
+	indent = &indent_str;
 }
 
 
@@ -260,7 +261,7 @@ void Indenter::add_indent_if_sol(int indent_level)
 		}
 
 		for (int xx = 0; xx < indent_level; xx++) {
-			streams->append(INDENT);
+			streams->append(*indent);
 		}
 	}
 }

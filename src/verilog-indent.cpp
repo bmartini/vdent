@@ -18,8 +18,9 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	std::string indent = "    ";
 
-	Indenter* indenter = new Indenter();
+	Indenter* indenter = new Indenter(indent);
 
 	indenter->process(&std::cin, &std::cout);
 

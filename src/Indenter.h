@@ -8,7 +8,6 @@
 #ifndef INDENTER_H
 #define INDENTER_H
 
-#define INDENT "    "
 
 #include "StreamHandler.h"
 #include "KeywordToken.h"
@@ -17,12 +16,13 @@
 class Indenter
 {
 public:
-	Indenter();
+	Indenter(std::string indent_str);
 	virtual ~Indenter();
 
 	void process(std::istream *in, std::ostream *out);
 
 private:
+	std::string* indent;
 	StreamHandler* streams;
 
 	static int compare_kw_token(const void * a , const void * b);
