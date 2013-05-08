@@ -232,7 +232,9 @@ void Indenter::add_if_string(char *ch)
 	}
 
 	streams->next(ch);
-	sanitize_char(ch);
+	if ('"' != *ch) {
+		sanitize_char(ch);
+	}
 
 	while (!streams->eof() && ('"' != *ch)) {
 		streams->next(ch);
