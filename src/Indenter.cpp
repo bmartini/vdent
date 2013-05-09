@@ -317,10 +317,10 @@ void Indenter::indent_loops(int indent_level, char *ch)
 	token ch_token = id_keyword(ch);
 
 	while (!streams->eof() && !done) {
-		if ((TA_BLOCK == ch_token.action) || (SEMICOLON == ch_token.id)) {
+		if ((BEGIN == ch_token.id) || (FORK == ch_token.id) || (SEMICOLON == ch_token.id)) {
 			add_indentable_section(ch_token, indent_level, ch);
 			done = true;
-		} else if (IF == ch_token.id) {
+		} else if ((TA_BLOCK == ch_token.action) || (IF == ch_token.id)) {
 			add_indentable_section(ch_token, indent_level + 1, ch);
 			done = true;
 		} else {
