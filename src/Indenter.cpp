@@ -349,8 +349,12 @@ void Indenter::indent_if(int indent_level, char *ch)
 	token ch_token = id_keyword(ch);
 
 	while (!streams->eof() && !done) {
-		if ((TA_BLOCK == ch_token.action) || (IF == ch_token.id) || (SEMICOLON == ch_token.id)) {
-			add_indentable_section(ch_token, indent_level - 1, ch);
+		if ((TA_BLOCK == ch_token.action) || (SEMICOLON == ch_token.id)) {
+			if ((BEGIN == ch_token.id) || (FORK == ch_token.id)) {
+				add_indentable_section(ch_token, indent_level - 1, ch);
+			} else {
+				add_indentable_section(ch_token, indent_level, ch);
+			}
 
 			size_t pos = streams->position();
 			next_valid_char(ch);
@@ -364,6 +368,23 @@ void Indenter::indent_if(int indent_level, char *ch)
 		} else {
 			if (ELSE == ch_token.id) {
 				add_indent_if_sol(indent_level - 1);
+				streams->travel_to(streams->position()+4, ch);
+
+				// check for "else if"
+				size_t pos = streams->position();
+				next_valid_char(ch);
+				ch_token = id_keyword(ch);
+
+				if (IF == ch_token.id) {
+					add_indent_if_sol(indent_level - 1);
+					// add the 'i' char
+					streams->next(ch);
+					sanitize_char(ch);
+				} else {
+					streams->travel_to(pos, ch);
+				}
+
+				ch_token = id_keyword(ch);
 			} else {
 				add_indent_if_sol(indent_level);
 			}
