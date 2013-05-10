@@ -443,6 +443,9 @@ void Indenter::indent_module(int indent_level, char *ch)
 
 	while (('#' != *ch) && ('(' != *ch) && (';' != *ch)) {
 		next_valid_char(ch);
+		if ('`' == *ch) {
+			add_indentable_section(id_keyword(ch), indent_level, ch);
+		}
 	}
 
 	if (';' != *ch) {
@@ -456,20 +459,28 @@ void Indenter::indent_module(int indent_level, char *ch)
 
 			while (((0 != bracket) || (')' != *ch))) {
 				next_valid_char(ch);
-				add_indent_if_sol(indent_level);
+				if ('`' == *ch) {
+					add_indentable_section(id_keyword(ch), indent_level, ch);
+				} else {
+					add_indent_if_sol(indent_level);
+				}
 
 				if ('(' == *ch) bracket++;
 				if (')' == *ch) bracket--;
 			}
 
 			next_valid_char(ch);
-
-			if ('(' != *ch) {
+			if ('`' == *ch) {
+				add_indentable_section(id_keyword(ch), indent_level, ch);
+			} else if ('(' != *ch) {
 				add_indent_if_sol(indent_level - 1);
 			}
 
 			while ('(' != *ch) {
 				next_valid_char(ch);
+				if ('`' == *ch) {
+					add_indentable_section(id_keyword(ch), indent_level, ch);
+				}
 			}
 		}
 
@@ -482,7 +493,11 @@ void Indenter::indent_module(int indent_level, char *ch)
 
 		while (((0 != bracket) || (')' != *ch))) {
 			next_valid_char(ch);
-			add_indent_if_sol(indent_level);
+			if ('`' == *ch) {
+				add_indentable_section(id_keyword(ch), indent_level, ch);
+			} else {
+				add_indent_if_sol(indent_level);
+			}
 
 			if ('(' == *ch) bracket++;
 			if (')' == *ch) bracket--;
@@ -493,9 +508,15 @@ void Indenter::indent_module(int indent_level, char *ch)
 
 		// add ')' get the next char and sanitize
 		next_valid_char(ch);
+		if ('`' == *ch) {
+			add_indentable_section(id_keyword(ch), indent_level, ch);
+		}
 
 		while (';' != *ch) {
 			next_valid_char(ch);
+			if ('`' == *ch) {
+				add_indentable_section(id_keyword(ch), indent_level, ch);
+			}
 		}
 
 		// add ';' get the next char and sanitize
