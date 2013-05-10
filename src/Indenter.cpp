@@ -49,16 +49,16 @@ void Indenter::process(std::istream *in, std::ostream *out)
 
 int Indenter::compare_kw_token(const void * a , const void * b)
 {
-	const std::string buffer = *((std::string *) a);
-	const token kw_token = *((token *) b);
+	const std::string *buffer = static_cast<const std::string *>(a);
+	const token *kw_token = static_cast<const token *>(b);
 
-	size_t bf_length = buffer.length();
-	size_t kw_length = strlen(kw_token.literal);
+	size_t bf_length = buffer->length();
+	size_t kw_length = strlen(kw_token->literal);
 
-	int match = (buffer.substr(0, kw_length)).compare(kw_token.literal);
+	int match = (buffer->substr(0, kw_length)).compare(kw_token->literal);
 
 	if (0 == match) {
-		if ((bf_length > kw_length) && (IS_NAME_CHAR(buffer[(int) kw_length]))) {
+		if ((bf_length > kw_length) && (IS_NAME_CHAR((*buffer)[(int) kw_length]))) {
 			// not keyword as the next char is a legal name char
 			return 1;
 		}
@@ -115,12 +115,12 @@ token Indenter::id_keyword(char *ch)
 	// move back to the original input stream position
 	streams->travel_to(pos, ch);
 
-	token * ch_token = (token *) bsearch(
+	token * ch_token = static_cast<token *>(bsearch(
 	                           (void *) &buffer,
 	                           (void *) keywords,
 	                           (sizeof(keywords) / sizeof(keywords[0])),
 	                           sizeof(token),
-	                           &compare_kw_token);
+	                           &compare_kw_token));
 
 	if (NULL != ch_token) {
 		// return matching keyword token
