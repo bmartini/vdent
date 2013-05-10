@@ -433,11 +433,28 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 }
 
 
+void Indenter::indent_module_bracket(int indent_level, char *ch)
+{
+	while ('(' != *ch) {
+		next_valid_char(ch);
+		if ('`' == *ch) {
+			add_indentable_section(id_keyword(ch), indent_level, ch);
+		}
+	}
+
+	while (')' != *ch) {
+		next_valid_char(ch);
+		if (('`' == *ch) || ('(' == *ch)) {
+			add_indentable_section(id_keyword(ch), indent_level, ch);
+		} else {
+			add_indent_if_sol(indent_level);
+		}
+	}
+}
+
+
 void Indenter::indent_module(int indent_level, char *ch)
 {
-	// bracket matching counter
-	int bracket = 0;
-
 	add_indent_if_sol(indent_level);
 	indent_level++;
 
@@ -457,24 +474,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 				streams->prev_remove();
 			}
 
-			while (((0 != bracket) || (')' != *ch))) {
-				next_valid_char(ch);
-				if ('`' == *ch) {
-					add_indentable_section(id_keyword(ch), indent_level, ch);
-				} else {
-					add_indent_if_sol(indent_level);
-				}
-
-				if ('(' == *ch) bracket++;
-				if (')' == *ch) bracket--;
-			}
-
-			next_valid_char(ch);
-			if ('`' == *ch) {
-				add_indentable_section(id_keyword(ch), indent_level, ch);
-			} else if ('(' != *ch) {
-				add_indent_if_sol(indent_level - 1);
-			}
+			indent_module_bracket(indent_level, ch);
 
 			while ('(' != *ch) {
 				next_valid_char(ch);
@@ -485,44 +485,23 @@ void Indenter::indent_module(int indent_level, char *ch)
 		}
 
 		// by this stage *ch will always be == '('
-		bracket++;
 		if (is_at_sol()) {
 			add_indent_if_sol(indent_level);
 			streams->prev_remove();
 		}
 
-		while (((0 != bracket) || (')' != *ch))) {
-			next_valid_char(ch);
-			if ('`' == *ch) {
-				add_indentable_section(id_keyword(ch), indent_level, ch);
-			} else {
-				add_indent_if_sol(indent_level);
-			}
-
-			if ('(' == *ch) bracket++;
-			if (')' == *ch) bracket--;
-		}
+		indent_module_bracket(indent_level, ch);
 
 		// custom indent for end ');'
 		add_indent_if_sol(indent_level - 1);
 
-		// add ')' get the next char and sanitize
-		next_valid_char(ch);
-		if ('`' == *ch) {
-			add_indentable_section(id_keyword(ch), indent_level, ch);
-		}
-
+		// add ')' and don't stop until ';'
 		while (';' != *ch) {
 			next_valid_char(ch);
 			if ('`' == *ch) {
 				add_indentable_section(id_keyword(ch), indent_level, ch);
 			}
 		}
-
-		// add ';' get the next char and sanitize
-		streams->next(ch);
-		normalize_eol(ch);
-		sanitize_char(ch);
 	}
 
 	indent_block(keywords[ENDMODULE], (indent_level - 1), ch);

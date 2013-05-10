@@ -39,6 +39,7 @@ private:
 
 	void indent_statement(int indentLevel, char *ch);
 	void indent_module(int indentLevel, char *ch);
+	void indent_module_bracket(int indentLevel, char *ch);
 	void indent_if(int indentLevel, char *ch);
 	void indent_loops(int indentLevel, char *ch);
 	void indent_block(token end, int indentLevel, char *ch);
