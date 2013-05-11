@@ -33,11 +33,11 @@ void Indenter::process(std::istream *in, std::ostream *out)
 	char ch;
 	streams->next_borrow(&ch);
 	sanitize_char(&ch); // check for comment, normalize eol
-	add_indentable_section(id_keyword(&ch), 0, &ch);
+	add_indentable_section(id_keyword(streams, &ch), 0, &ch);
 
 	while (!streams->eof()) {
 		next_valid_char(&ch);
-		add_indentable_section(id_keyword(&ch), 0, &ch);
+		add_indentable_section(id_keyword(streams, &ch), 0, &ch);
 	}
 
 	streams->prev_return(&ch);
@@ -67,11 +67,12 @@ int Indenter::compare_kw_token(const void * a , const void * b)
 	return match;
 }
 
+
 /*
  * takes the char and determines if it's the start of a keyword. if a keyword
  * the function returns the keyword token.
  */
-token Indenter::id_keyword(char *ch)
+token Indenter::id_keyword(StreamHandler* streams, char *ch)
 {
 	std::string buffer;
 	int bf_length;
@@ -314,7 +315,7 @@ void Indenter::indent_loops(int indent_level, char *ch)
 	streams->next(ch);
 	sanitize_char(ch);
 
-	token ch_token = id_keyword(ch);
+	token ch_token = id_keyword(streams, ch);
 
 	while (!streams->eof() && !done) {
 		if ((BEGIN == ch_token.id) || (FORK == ch_token.id) || (SEMICOLON == ch_token.id)) {
@@ -329,7 +330,7 @@ void Indenter::indent_loops(int indent_level, char *ch)
 				streams->next(ch);
 				sanitize_char(ch);
 			}
-			ch_token = id_keyword(ch);
+			ch_token = id_keyword(streams, ch);
 		}
 	}
 }
@@ -346,7 +347,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 	streams->next(ch);
 	sanitize_char(ch);
 
-	token ch_token = id_keyword(ch);
+	token ch_token = id_keyword(streams, ch);
 
 	while (!streams->eof() && !done) {
 		if ((TA_BLOCK == ch_token.action) || (SEMICOLON == ch_token.id)) {
@@ -358,7 +359,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 
 			size_t pos = streams->position();
 			next_valid_char(ch);
-			ch_token = id_keyword(ch);
+			ch_token = id_keyword(streams, ch);
 
 			if (ELSE != ch_token.id) {
 				// go back to position in stream
@@ -373,7 +374,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 				// check for "else if"
 				size_t pos = streams->position();
 				next_valid_char(ch);
-				ch_token = id_keyword(ch);
+				ch_token = id_keyword(streams, ch);
 
 				if (IF == ch_token.id) {
 					add_indent_if_sol(indent_level - 1);
@@ -384,7 +385,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 					streams->travel_to(pos, ch);
 				}
 
-				ch_token = id_keyword(ch);
+				ch_token = id_keyword(streams, ch);
 			} else {
 				add_indent_if_sol(indent_level);
 			}
@@ -394,7 +395,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 				sanitize_char(ch);
 			}
 
-			ch_token = id_keyword(ch);
+			ch_token = id_keyword(streams, ch);
 		}
 	}
 }
@@ -412,14 +413,14 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 		next_valid_char(ch);
 	}
 
-	token ch_token = id_keyword(ch);
+	token ch_token = id_keyword(streams, ch);
 	while (!streams->eof() && (end.id != ch_token.id)) {
 		if (!add_indentable_section(ch_token, indent_level, ch)) {
 			add_indent_if_sol(indent_level);
 			next_valid_char(ch);
 		}
 
-		ch_token = id_keyword(ch);
+		ch_token = id_keyword(streams, ch);
 	}
 
 	if (!streams->eof()) {
@@ -438,14 +439,14 @@ void Indenter::indent_module_bracket(int indent_level, char *ch)
 	while ('(' != *ch) {
 		next_valid_char(ch);
 		if ('`' == *ch) {
-			add_indentable_section(id_keyword(ch), indent_level, ch);
+			add_indentable_section(id_keyword(streams, ch), indent_level, ch);
 		}
 	}
 
 	while (')' != *ch) {
 		next_valid_char(ch);
 		if (('`' == *ch) || ('(' == *ch)) {
-			add_indentable_section(id_keyword(ch), indent_level, ch);
+			add_indentable_section(id_keyword(streams, ch), indent_level, ch);
 		} else {
 			add_indent_if_sol(indent_level);
 		}
@@ -461,7 +462,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 	while (('#' != *ch) && ('(' != *ch) && (';' != *ch)) {
 		next_valid_char(ch);
 		if ('`' == *ch) {
-			add_indentable_section(id_keyword(ch), indent_level, ch);
+			add_indentable_section(id_keyword(streams, ch), indent_level, ch);
 		}
 	}
 
@@ -479,7 +480,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 			while ('(' != *ch) {
 				next_valid_char(ch);
 				if ('`' == *ch) {
-					add_indentable_section(id_keyword(ch), indent_level, ch);
+					add_indentable_section(id_keyword(streams, ch), indent_level, ch);
 				}
 			}
 		}
@@ -499,7 +500,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 		while (';' != *ch) {
 			next_valid_char(ch);
 			if ('`' == *ch) {
-				add_indentable_section(id_keyword(ch), indent_level, ch);
+				add_indentable_section(id_keyword(streams, ch), indent_level, ch);
 			}
 		}
 	}
