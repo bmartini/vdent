@@ -28,7 +28,7 @@ Indenter::~Indenter()
 
 void Indenter::process(std::istream *in, std::ostream *out)
 {
-	streams = new StreamHandler(in, out);
+	StreamHandler *streams = new StreamHandler(in, out);
 
 	char ch;
 	streams->next_borrow(&ch);

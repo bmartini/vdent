@@ -23,7 +23,6 @@ public:
 
 private:
 	std::string* indent;
-	StreamHandler* streams;
 
 	static int compare_kw_token(const void * a , const void * b);
 	token id_keyword(StreamHandler* streams, char *ch);
