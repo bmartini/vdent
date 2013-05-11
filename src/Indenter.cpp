@@ -336,7 +336,7 @@ void Indenter::indent_loops(StreamHandler* streams, int indent_level, char *ch)
 }
 
 
-void Indenter::indent_if(int indent_level, char *ch)
+void Indenter::indent_if(StreamHandler* streams, int indent_level, char *ch)
 {
 	bool done = false;
 
@@ -526,7 +526,7 @@ bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, in
 		indent_loops(streams, indent_level, ch);
 		break;
 	case TA_IF :
-		indent_if(indent_level, ch);
+		indent_if(streams, indent_level, ch);
 		break;
 	case TA_MODULE :
 		indent_module(0, ch);
