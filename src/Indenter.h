@@ -38,7 +38,7 @@ private:
 	void next_valid_char(StreamHandler* streams, char *ch);
 
 	void indent_statement(int indentLevel, char *ch);
-	void indent_module(int indentLevel, char *ch);
+	void indent_module(StreamHandler* streams, int indentLevel, char *ch);
 	void indent_module_bracket(StreamHandler* streams, int indentLevel, char *ch);
 	void indent_if(StreamHandler* streams, int indentLevel, char *ch);
 	void indent_loops(StreamHandler* streams, int indentLevel, char *ch);

@@ -454,7 +454,7 @@ void Indenter::indent_module_bracket(StreamHandler* streams, int indent_level, c
 }
 
 
-void Indenter::indent_module(int indent_level, char *ch)
+void Indenter::indent_module(StreamHandler* streams, int indent_level, char *ch)
 {
 	add_indent_if_sol(streams, indent_level);
 	indent_level++;
@@ -529,7 +529,7 @@ bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, in
 		indent_if(streams, indent_level, ch);
 		break;
 	case TA_MODULE :
-		indent_module(0, ch);
+		indent_module(streams, 0, ch);
 		break;
 	case TA_GROUP:
 		switch (ch_token.id) {
