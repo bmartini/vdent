@@ -286,7 +286,7 @@ void Indenter::next_valid_char(StreamHandler* streams, char *ch)
 }
 
 
-void Indenter::indent_statement(int indent_level, char *ch)
+void Indenter::indent_statement(StreamHandler* streams, int indent_level, char *ch)
 {
 	// add indent if this is at the start of a line
 	add_indent_if_sol(streams, indent_level);
@@ -519,7 +519,7 @@ bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, in
 		next_valid_char(streams, ch);
 		break;
 	case TA_STATEMENT :
-		indent_statement(indent_level, ch);
+		indent_statement(streams, indent_level, ch);
 		streams->prev(ch);
 		break;
 	case TA_LOOP :
