@@ -32,7 +32,7 @@ void Indenter::process(std::istream *in, std::ostream *out)
 
 	char ch;
 	streams->next_borrow(&ch);
-	sanitize_char(&ch); // check for comment, normalize eol
+	sanitize_char(streams, &ch); // check for comment, normalize eol
 	add_indentable_section(streams, id_keyword(streams, &ch), 0, &ch);
 
 	while (!streams->eof()) {
@@ -187,7 +187,7 @@ void Indenter::normalize_eol(char *ch)
 
 
 // check for comment
-void Indenter::sanitize_char(char *ch)
+void Indenter::sanitize_char(StreamHandler* streams, char *ch)
 {
 	add_if_string(streams, ch);
 
@@ -197,7 +197,7 @@ void Indenter::sanitize_char(char *ch)
 			streams->next(ch);
 		}
 
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 		return;
 
 	} else if ((*ch == '/') && (streams->next_peek() == '*')) { // multi-line comment
@@ -214,7 +214,7 @@ void Indenter::sanitize_char(char *ch)
 		streams->next(ch); // add '*'
 		streams->next(ch); // add '/'
 
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 		return;
 	}
 
@@ -234,22 +234,22 @@ void Indenter::add_if_string(StreamHandler* streams, char *ch)
 
 	streams->next(ch);
 	if ('"' != *ch) {
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
 	while (!streams->eof() && ('"' != *ch)) {
 		streams->next(ch);
 
 		if ('"' != *ch) {
-			sanitize_char(ch);
+			sanitize_char(streams, ch);
 		} else if ('\\' == streams->prev_peek()) {
 			streams->next(ch);
-			sanitize_char(ch);
+			sanitize_char(streams, ch);
 		}
 	}
 
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 }
 
 
@@ -274,12 +274,12 @@ void Indenter::next_valid_char(StreamHandler* streams, char *ch)
 {
 	if (!is_eol(streams, *ch) && !IS_WHITE_SPACE(*ch)) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
 	while (!streams->eof() && (is_eol(streams, *ch) || IS_WHITE_SPACE(*ch))) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
 	add_indent_if_sol(streams, 0);
@@ -294,13 +294,13 @@ void Indenter::indent_statement(int indent_level, char *ch)
 	// keep going until you get a ";"
 	while (!streams->eof() && (';' != *ch)) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
 	// add till the EOL
 	while (!is_eol(streams, *ch)) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 }
 
@@ -313,7 +313,7 @@ void Indenter::indent_loops(int indent_level, char *ch)
 
 	// add the 1st identifying char
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 
 	token ch_token = id_keyword(streams, ch);
 
@@ -328,7 +328,7 @@ void Indenter::indent_loops(int indent_level, char *ch)
 			if (!add_indentable_section(streams, ch_token, indent_level + 1, ch)) {
 				add_indent_if_sol(streams, indent_level + 1);
 				streams->next(ch);
-				sanitize_char(ch);
+				sanitize_char(streams, ch);
 			}
 			ch_token = id_keyword(streams, ch);
 		}
@@ -345,7 +345,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 
 	// add the 'i' char
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 
 	token ch_token = id_keyword(streams, ch);
 
@@ -380,7 +380,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 					add_indent_if_sol(streams, indent_level - 1);
 					// add the 'i' char
 					streams->next(ch);
-					sanitize_char(ch);
+					sanitize_char(streams, ch);
 				} else {
 					streams->travel_to(pos, ch);
 				}
@@ -392,7 +392,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 
 			if (!add_indentable_section(streams, ch_token, indent_level, ch)) {
 				streams->next(ch);
-				sanitize_char(ch);
+				sanitize_char(streams, ch);
 			}
 
 			ch_token = id_keyword(streams, ch);
@@ -407,7 +407,7 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 	indent_level++;
 
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 
 	if (is_eol(streams, *ch) || IS_WHITE_SPACE(*ch)) {
 		next_valid_char(streams, ch);
@@ -429,7 +429,7 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 		for (unsigned int xx = 0; xx < strlen(end.literal); xx++) {
 			streams->next(ch);
 		}
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 }
 
