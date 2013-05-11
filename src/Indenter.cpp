@@ -132,7 +132,7 @@ token Indenter::id_keyword(StreamHandler* streams, char *ch)
 }
 
 
-bool Indenter::is_at_sol() const
+bool Indenter::is_at_sol(StreamHandler* streams) const
 {
 	size_t pos = streams->position();
 
@@ -255,7 +255,7 @@ void Indenter::add_if_string(char *ch)
 
 void Indenter::add_indent_if_sol(int indent_level)
 {
-	if (is_at_sol()) {
+	if (is_at_sol(streams)) {
 		char ch;
 
 		// trim leading white space
@@ -468,7 +468,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 
 	if (';' != *ch) {
 		if ('#' == *ch) {
-			if (is_at_sol()) {
+			if (is_at_sol(streams)) {
 				// custom indent for '#('
 				add_indent_if_sol(indent_level);
 				streams->prev_remove();
@@ -486,7 +486,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 		}
 
 		// by this stage *ch will always be == '('
-		if (is_at_sol()) {
+		if (is_at_sol(streams)) {
 			add_indent_if_sol(indent_level);
 			streams->prev_remove();
 		}

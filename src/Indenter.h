@@ -28,7 +28,7 @@ private:
 	static int compare_kw_token(const void * a , const void * b);
 	token id_keyword(StreamHandler* streams, char *ch);
 
-	bool is_at_sol() const;
+	bool is_at_sol(StreamHandler* streams) const;
 	bool is_eol(StreamHandler* streams, char ch) const;
 
 	void normalize_eol(char *ch);
