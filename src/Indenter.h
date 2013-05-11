@@ -44,7 +44,7 @@ private:
 	void indent_loops(int indentLevel, char *ch);
 	void indent_block(token end, int indentLevel, char *ch);
 
-	bool add_indentable_section(token ch_token, int indentLevel, char *ch);
+	bool add_indentable_section(StreamHandler* streams, token ch_token, int indentLevel, char *ch);
 };
 
 

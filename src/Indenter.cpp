@@ -33,11 +33,11 @@ void Indenter::process(std::istream *in, std::ostream *out)
 	char ch;
 	streams->next_borrow(&ch);
 	sanitize_char(&ch); // check for comment, normalize eol
-	add_indentable_section(id_keyword(streams, &ch), 0, &ch);
+	add_indentable_section(streams, id_keyword(streams, &ch), 0, &ch);
 
 	while (!streams->eof()) {
 		next_valid_char(streams, &ch);
-		add_indentable_section(id_keyword(streams, &ch), 0, &ch);
+		add_indentable_section(streams, id_keyword(streams, &ch), 0, &ch);
 	}
 
 	streams->prev_return(&ch);
@@ -319,13 +319,13 @@ void Indenter::indent_loops(int indent_level, char *ch)
 
 	while (!streams->eof() && !done) {
 		if ((BEGIN == ch_token.id) || (FORK == ch_token.id) || (SEMICOLON == ch_token.id)) {
-			add_indentable_section(ch_token, indent_level, ch);
+			add_indentable_section(streams, ch_token, indent_level, ch);
 			done = true;
 		} else if ((TA_BLOCK == ch_token.action) || (IF == ch_token.id)) {
-			add_indentable_section(ch_token, indent_level + 1, ch);
+			add_indentable_section(streams, ch_token, indent_level + 1, ch);
 			done = true;
 		} else {
-			if (!add_indentable_section(ch_token, indent_level + 1, ch)) {
+			if (!add_indentable_section(streams, ch_token, indent_level + 1, ch)) {
 				add_indent_if_sol(indent_level + 1);
 				streams->next(ch);
 				sanitize_char(ch);
@@ -352,9 +352,9 @@ void Indenter::indent_if(int indent_level, char *ch)
 	while (!streams->eof() && !done) {
 		if ((TA_BLOCK == ch_token.action) || (SEMICOLON == ch_token.id)) {
 			if ((BEGIN == ch_token.id) || (FORK == ch_token.id)) {
-				add_indentable_section(ch_token, indent_level - 1, ch);
+				add_indentable_section(streams, ch_token, indent_level - 1, ch);
 			} else {
-				add_indentable_section(ch_token, indent_level, ch);
+				add_indentable_section(streams, ch_token, indent_level, ch);
 			}
 
 			size_t pos = streams->position();
@@ -390,7 +390,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 				add_indent_if_sol(indent_level);
 			}
 
-			if (!add_indentable_section(ch_token, indent_level, ch)) {
+			if (!add_indentable_section(streams, ch_token, indent_level, ch)) {
 				streams->next(ch);
 				sanitize_char(ch);
 			}
@@ -415,7 +415,7 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 
 	token ch_token = id_keyword(streams, ch);
 	while (!streams->eof() && (end.id != ch_token.id)) {
-		if (!add_indentable_section(ch_token, indent_level, ch)) {
+		if (!add_indentable_section(streams, ch_token, indent_level, ch)) {
 			add_indent_if_sol(indent_level);
 			next_valid_char(streams, ch);
 		}
@@ -439,14 +439,14 @@ void Indenter::indent_module_bracket(int indent_level, char *ch)
 	while ('(' != *ch) {
 		next_valid_char(streams, ch);
 		if ('`' == *ch) {
-			add_indentable_section(id_keyword(streams, ch), indent_level, ch);
+			add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 		}
 	}
 
 	while (')' != *ch) {
 		next_valid_char(streams, ch);
 		if (('`' == *ch) || ('(' == *ch)) {
-			add_indentable_section(id_keyword(streams, ch), indent_level, ch);
+			add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 		} else {
 			add_indent_if_sol(indent_level);
 		}
@@ -462,7 +462,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 	while (('#' != *ch) && ('(' != *ch) && (';' != *ch)) {
 		next_valid_char(streams, ch);
 		if ('`' == *ch) {
-			add_indentable_section(id_keyword(streams, ch), indent_level, ch);
+			add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 		}
 	}
 
@@ -480,7 +480,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 			while ('(' != *ch) {
 				next_valid_char(streams, ch);
 				if ('`' == *ch) {
-					add_indentable_section(id_keyword(streams, ch), indent_level, ch);
+					add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 				}
 			}
 		}
@@ -500,7 +500,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 		while (';' != *ch) {
 			next_valid_char(streams, ch);
 			if ('`' == *ch) {
-				add_indentable_section(id_keyword(streams, ch), indent_level, ch);
+				add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 			}
 		}
 	}
@@ -509,7 +509,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 }
 
 
-bool Indenter::add_indentable_section(token ch_token, int indent_level, char *ch)
+bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, int indent_level, char *ch)
 {
 	bool indent_performed = true;
 
