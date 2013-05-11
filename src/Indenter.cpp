@@ -77,7 +77,7 @@ token Indenter::id_keyword(StreamHandler* streams, char *ch)
 	std::string buffer;
 	int bf_length;
 
-	if (IS_WHITE_SPACE(*ch) || is_eol(*ch)) {
+	if (IS_WHITE_SPACE(*ch) || is_eol(streams, *ch)) {
 		return keywords[OTHER];
 	}
 
@@ -105,7 +105,7 @@ token Indenter::id_keyword(StreamHandler* streams, char *ch)
 	// read ahead in stream and construct a tmp buffer, 1 greater then max
 	// literal length
 	for (bf_length = 0; bf_length < (MAX_LITERAL_SIZE + 1); bf_length++) {
-		if (is_eol(*ch)) {
+		if (is_eol(streams, *ch)) {
 			break;
 		}
 
@@ -145,7 +145,7 @@ bool Indenter::is_at_sol() const
 		streams->prev(&ch);
 	}
 
-	if ((0 == streams->position()) || is_eol(ch)) {
+	if ((0 == streams->position()) || is_eol(streams, ch)) {
 		streams->travel_to(pos, &ch);
 		return true;
 	} else {
@@ -155,7 +155,7 @@ bool Indenter::is_at_sol() const
 }
 
 
-bool Indenter::is_eol(char ch) const
+bool Indenter::is_eol(StreamHandler* streams, char ch) const
 {
 	return (streams->eof() || ch == '\n' || ch == '\r');
 }
@@ -163,7 +163,7 @@ bool Indenter::is_eol(char ch) const
 
 void Indenter::normalize_eol(char *ch)
 {
-	if (!is_eol(*ch)) {
+	if (!is_eol(streams, *ch)) {
 		return;
 	}
 
@@ -193,7 +193,7 @@ void Indenter::sanitize_char(char *ch)
 
 	// single line comment
 	if ((*ch == '/') && (streams->next_peek() == '/')) {
-		while (!is_eol(*ch)) {
+		while (!is_eol(streams, *ch)) {
 			streams->next(ch);
 		}
 
@@ -272,12 +272,12 @@ void Indenter::add_indent_if_sol(int indent_level)
 
 void Indenter::next_valid_char(StreamHandler* streams, char *ch)
 {
-	if (!is_eol(*ch) && !IS_WHITE_SPACE(*ch)) {
+	if (!is_eol(streams, *ch) && !IS_WHITE_SPACE(*ch)) {
 		streams->next(ch);
 		sanitize_char(ch);
 	}
 
-	while (!streams->eof() && (is_eol(*ch) || IS_WHITE_SPACE(*ch))) {
+	while (!streams->eof() && (is_eol(streams, *ch) || IS_WHITE_SPACE(*ch))) {
 		streams->next(ch);
 		sanitize_char(ch);
 	}
@@ -298,7 +298,7 @@ void Indenter::indent_statement(int indent_level, char *ch)
 	}
 
 	// add till the EOL
-	while (!is_eol(*ch)) {
+	while (!is_eol(streams, *ch)) {
 		streams->next(ch);
 		sanitize_char(ch);
 	}
@@ -409,7 +409,7 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 	streams->next(ch);
 	sanitize_char(ch);
 
-	if (is_eol(*ch) || IS_WHITE_SPACE(*ch)) {
+	if (is_eol(streams, *ch) || IS_WHITE_SPACE(*ch)) {
 		next_valid_char(streams, ch);
 	}
 

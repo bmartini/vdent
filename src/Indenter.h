@@ -29,7 +29,7 @@ private:
 	token id_keyword(StreamHandler* streams, char *ch);
 
 	bool is_at_sol() const;
-	bool is_eol(char ch) const;
+	bool is_eol(StreamHandler* streams, char ch) const;
 
 	void normalize_eol(char *ch);
 	void sanitize_char(char *ch);
