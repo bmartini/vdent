@@ -35,7 +35,7 @@ private:
 	void sanitize_char(char *ch);
 	void add_if_string(char *ch);
 	void add_indent_if_sol(int indentLevel);
-	void next_valid_char(char *ch);
+	void next_valid_char(StreamHandler* streams, char *ch);
 
 	void indent_statement(int indentLevel, char *ch);
 	void indent_module(int indentLevel, char *ch);
