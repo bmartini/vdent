@@ -189,7 +189,7 @@ void Indenter::normalize_eol(char *ch)
 // check for comment
 void Indenter::sanitize_char(char *ch)
 {
-	add_if_string(ch);
+	add_if_string(streams, ch);
 
 	// single line comment
 	if ((*ch == '/') && (streams->next_peek() == '/')) {
@@ -222,7 +222,7 @@ void Indenter::sanitize_char(char *ch)
 }
 
 
-void Indenter::add_if_string(char *ch)
+void Indenter::add_if_string(StreamHandler* streams, char *ch)
 {
 	if (0 == streams->position()) {
 		return;
