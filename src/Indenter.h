@@ -31,7 +31,7 @@ private:
 	bool is_at_sol(StreamHandler* streams) const;
 	bool is_eol(StreamHandler* streams, char ch) const;
 
-	void normalize_eol(char *ch);
+	void normalize_eol(StreamHandler* streams, char *ch);
 	void sanitize_char(StreamHandler* streams, char *ch);
 	void add_if_string(StreamHandler* streams, char *ch);
 	void add_indent_if_sol(StreamHandler* streams, int indentLevel);

@@ -161,7 +161,7 @@ bool Indenter::is_eol(StreamHandler* streams, char ch) const
 }
 
 
-void Indenter::normalize_eol(char *ch)
+void Indenter::normalize_eol(StreamHandler* streams, char *ch)
 {
 	if (!is_eol(streams, *ch)) {
 		return;
@@ -204,11 +204,11 @@ void Indenter::sanitize_char(StreamHandler* streams, char *ch)
 		streams->next(ch); // add '/'
 		streams->next(ch); // add '*'
 
-		normalize_eol(ch);
+		normalize_eol(streams, ch);
 
 		while (!streams->eof() && !((*ch == '*') && (streams->next_peek() == '/'))) {
 			streams->next(ch);
-			normalize_eol(ch);
+			normalize_eol(streams, ch);
 		}
 
 		streams->next(ch); // add '*'
@@ -218,7 +218,7 @@ void Indenter::sanitize_char(StreamHandler* streams, char *ch)
 		return;
 	}
 
-	normalize_eol(ch);
+	normalize_eol(streams, ch);
 }
 
 
