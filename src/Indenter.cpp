@@ -253,7 +253,7 @@ void Indenter::add_if_string(char *ch)
 }
 
 
-void Indenter::add_indent_if_sol(int indent_level)
+void Indenter::add_indent_if_sol(StreamHandler* streams, int indent_level)
 {
 	if (is_at_sol(streams)) {
 		char ch;
@@ -282,14 +282,14 @@ void Indenter::next_valid_char(StreamHandler* streams, char *ch)
 		sanitize_char(ch);
 	}
 
-	add_indent_if_sol(0);
+	add_indent_if_sol(streams, 0);
 }
 
 
 void Indenter::indent_statement(int indent_level, char *ch)
 {
 	// add indent if this is at the start of a line
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 
 	// keep going until you get a ";"
 	while (!streams->eof() && (';' != *ch)) {
@@ -309,7 +309,7 @@ void Indenter::indent_loops(int indent_level, char *ch)
 {
 	bool done = false;
 
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 
 	// add the 1st identifying char
 	streams->next(ch);
@@ -326,7 +326,7 @@ void Indenter::indent_loops(int indent_level, char *ch)
 			done = true;
 		} else {
 			if (!add_indentable_section(streams, ch_token, indent_level + 1, ch)) {
-				add_indent_if_sol(indent_level + 1);
+				add_indent_if_sol(streams, indent_level + 1);
 				streams->next(ch);
 				sanitize_char(ch);
 			}
@@ -340,7 +340,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 {
 	bool done = false;
 
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 	indent_level++;
 
 	// add the 'i' char
@@ -368,7 +368,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 			}
 		} else {
 			if (ELSE == ch_token.id) {
-				add_indent_if_sol(indent_level - 1);
+				add_indent_if_sol(streams, indent_level - 1);
 				streams->travel_to(streams->position()+4, ch);
 
 				// check for "else if"
@@ -377,7 +377,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 				ch_token = id_keyword(streams, ch);
 
 				if (IF == ch_token.id) {
-					add_indent_if_sol(indent_level - 1);
+					add_indent_if_sol(streams, indent_level - 1);
 					// add the 'i' char
 					streams->next(ch);
 					sanitize_char(ch);
@@ -387,7 +387,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 
 				ch_token = id_keyword(streams, ch);
 			} else {
-				add_indent_if_sol(indent_level);
+				add_indent_if_sol(streams, indent_level);
 			}
 
 			if (!add_indentable_section(streams, ch_token, indent_level, ch)) {
@@ -403,7 +403,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 
 void Indenter::indent_block(token end, int indent_level, char *ch)
 {
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 	indent_level++;
 
 	streams->next(ch);
@@ -416,7 +416,7 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 	token ch_token = id_keyword(streams, ch);
 	while (!streams->eof() && (end.id != ch_token.id)) {
 		if (!add_indentable_section(streams, ch_token, indent_level, ch)) {
-			add_indent_if_sol(indent_level);
+			add_indent_if_sol(streams, indent_level);
 			next_valid_char(streams, ch);
 		}
 
@@ -425,7 +425,7 @@ void Indenter::indent_block(token end, int indent_level, char *ch)
 
 	if (!streams->eof()) {
 		indent_level--;
-		add_indent_if_sol(indent_level);
+		add_indent_if_sol(streams, indent_level);
 		for (unsigned int xx = 0; xx < strlen(end.literal); xx++) {
 			streams->next(ch);
 		}
@@ -448,7 +448,7 @@ void Indenter::indent_module_bracket(int indent_level, char *ch)
 		if (('`' == *ch) || ('(' == *ch)) {
 			add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 		} else {
-			add_indent_if_sol(indent_level);
+			add_indent_if_sol(streams, indent_level);
 		}
 	}
 }
@@ -456,7 +456,7 @@ void Indenter::indent_module_bracket(int indent_level, char *ch)
 
 void Indenter::indent_module(int indent_level, char *ch)
 {
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 	indent_level++;
 
 	while (('#' != *ch) && ('(' != *ch) && (';' != *ch)) {
@@ -470,7 +470,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 		if ('#' == *ch) {
 			if (is_at_sol(streams)) {
 				// custom indent for '#('
-				add_indent_if_sol(indent_level);
+				add_indent_if_sol(streams, indent_level);
 				streams->prev_remove();
 				streams->prev_remove();
 			}
@@ -487,14 +487,14 @@ void Indenter::indent_module(int indent_level, char *ch)
 
 		// by this stage *ch will always be == '('
 		if (is_at_sol(streams)) {
-			add_indent_if_sol(indent_level);
+			add_indent_if_sol(streams, indent_level);
 			streams->prev_remove();
 		}
 
 		indent_module_bracket(indent_level, ch);
 
 		// custom indent for end ');'
-		add_indent_if_sol(indent_level - 1);
+		add_indent_if_sol(streams, indent_level - 1);
 
 		// add ')' and don't stop until ';'
 		while (';' != *ch) {
@@ -515,7 +515,7 @@ bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, in
 
 	switch (ch_token.action) {
 	case TA_MACRO:
-		add_indent_if_sol(0);
+		add_indent_if_sol(streams, 0);
 		next_valid_char(streams, ch);
 		break;
 	case TA_STATEMENT :
