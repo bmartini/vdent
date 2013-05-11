@@ -434,7 +434,7 @@ void Indenter::indent_block(StreamHandler* streams, token end, int indent_level,
 }
 
 
-void Indenter::indent_module_bracket(int indent_level, char *ch)
+void Indenter::indent_module_bracket(StreamHandler* streams, int indent_level, char *ch)
 {
 	while ('(' != *ch) {
 		next_valid_char(streams, ch);
@@ -475,7 +475,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 				streams->prev_remove();
 			}
 
-			indent_module_bracket(indent_level, ch);
+			indent_module_bracket(streams, indent_level, ch);
 
 			while ('(' != *ch) {
 				next_valid_char(streams, ch);
@@ -491,7 +491,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 			streams->prev_remove();
 		}
 
-		indent_module_bracket(indent_level, ch);
+		indent_module_bracket(streams, indent_level, ch);
 
 		// custom indent for end ');'
 		add_indent_if_sol(streams, indent_level - 1);
