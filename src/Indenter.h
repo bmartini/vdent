@@ -42,7 +42,7 @@ private:
 	void indent_module_bracket(int indentLevel, char *ch);
 	void indent_if(int indentLevel, char *ch);
 	void indent_loops(int indentLevel, char *ch);
-	void indent_block(token end, int indentLevel, char *ch);
+	void indent_block(StreamHandler* streams, token end, int indentLevel, char *ch);
 
 	bool add_indentable_section(StreamHandler* streams, token ch_token, int indentLevel, char *ch);
 };

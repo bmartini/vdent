@@ -401,7 +401,7 @@ void Indenter::indent_if(int indent_level, char *ch)
 }
 
 
-void Indenter::indent_block(token end, int indent_level, char *ch)
+void Indenter::indent_block(StreamHandler* streams, token end, int indent_level, char *ch)
 {
 	add_indent_if_sol(streams, indent_level);
 	indent_level++;
@@ -505,7 +505,7 @@ void Indenter::indent_module(int indent_level, char *ch)
 		}
 	}
 
-	indent_block(keywords[ENDMODULE], (indent_level - 1), ch);
+	indent_block(streams, keywords[ENDMODULE], (indent_level - 1), ch);
 }
 
 
@@ -534,10 +534,10 @@ bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, in
 	case TA_GROUP:
 		switch (ch_token.id) {
 		case BRACKET_OPEN :
-			indent_block(keywords[BRACKET_CLOSE], indent_level, ch);
+			indent_block(streams, keywords[BRACKET_CLOSE], indent_level, ch);
 			break;
 		case BRACES_OPEN :
-			indent_block(keywords[BRACES_CLOSE], indent_level, ch);
+			indent_block(streams, keywords[BRACES_CLOSE], indent_level, ch);
 			break;
 		default :
 			indent_performed = false;
@@ -547,37 +547,37 @@ bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, in
 	case TA_BLOCK :
 		switch (ch_token.id) {
 		case BEGIN :
-			indent_block(keywords[END], indent_level, ch);
+			indent_block(streams, keywords[END], indent_level, ch);
 			break;
 		case FORK :
-			indent_block(keywords[JOIN], indent_level, ch);
+			indent_block(streams, keywords[JOIN], indent_level, ch);
 			break;
 		case GENERATE :
-			indent_block(keywords[ENDGENERATE], indent_level, ch);
+			indent_block(streams, keywords[ENDGENERATE], indent_level, ch);
 			break;
 		case FUNCTION :
-			indent_block(keywords[ENDFUNCTION], indent_level, ch);
+			indent_block(streams, keywords[ENDFUNCTION], indent_level, ch);
 			break;
 		case PRIMITIVE :
-			indent_block(keywords[ENDPRIMITIVE], indent_level, ch);
+			indent_block(streams, keywords[ENDPRIMITIVE], indent_level, ch);
 			break;
 		case SPECIFY :
-			indent_block(keywords[ENDSPECIFY], indent_level, ch);
+			indent_block(streams, keywords[ENDSPECIFY], indent_level, ch);
 			break;
 		case TABLE :
-			indent_block(keywords[ENDTABLE], indent_level, ch);
+			indent_block(streams, keywords[ENDTABLE], indent_level, ch);
 			break;
 		case TASK :
-			indent_block(keywords[ENDTASK], indent_level, ch);
+			indent_block(streams, keywords[ENDTASK], indent_level, ch);
 			break;
 		case PRO_IFDEF :
 		case PRO_IFNDEF :
-			indent_block(keywords[PRO_ENDIF], 0, ch);
+			indent_block(streams, keywords[PRO_ENDIF], 0, ch);
 			break;
 		case CASE :
 		case CASEX :
 		case CASEZ :
-			indent_block(keywords[ENDCASE], indent_level, ch);
+			indent_block(streams, keywords[ENDCASE], indent_level, ch);
 			break;
 		default :
 			indent_performed = false;
