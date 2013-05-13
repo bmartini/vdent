@@ -36,7 +36,7 @@ public:
 
 	void append(std::string addition);
 	void travel_to(size_t position, char *ch);
-	size_t position();
+	size_t position() const;
 
 	void flush();
 private:

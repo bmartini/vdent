@@ -28,16 +28,16 @@ Indenter::~Indenter()
 
 void Indenter::process(std::istream *in, std::ostream *out)
 {
-	streams = new StreamHandler(in, out);
+	StreamHandler *streams = new StreamHandler(in, out);
 
 	char ch;
 	streams->next_borrow(&ch);
-	sanitize_char(&ch); // check for comment, normalize eol
-	add_indentable_section(id_keyword(&ch), 0, &ch);
+	sanitize_char(streams, &ch); // check for comment, normalize eol
+	add_indentable_section(streams, id_keyword(streams, &ch), 0, &ch);
 
 	while (!streams->eof()) {
-		next_valid_char(&ch);
-		add_indentable_section(id_keyword(&ch), 0, &ch);
+		next_valid_char(streams, &ch);
+		add_indentable_section(streams, id_keyword(streams, &ch), 0, &ch);
 	}
 
 	streams->prev_return(&ch);
@@ -67,16 +67,17 @@ int Indenter::compare_kw_token(const void * a , const void * b)
 	return match;
 }
 
+
 /*
  * takes the char and determines if it's the start of a keyword. if a keyword
  * the function returns the keyword token.
  */
-token Indenter::id_keyword(char *ch)
+token Indenter::id_keyword(StreamHandler* streams, char *ch)
 {
 	std::string buffer;
 	int bf_length;
 
-	if (IS_WHITE_SPACE(*ch) || is_eol(*ch)) {
+	if (IS_WHITE_SPACE(*ch) || is_eol(streams, *ch)) {
 		return keywords[OTHER];
 	}
 
@@ -104,7 +105,7 @@ token Indenter::id_keyword(char *ch)
 	// read ahead in stream and construct a tmp buffer, 1 greater then max
 	// literal length
 	for (bf_length = 0; bf_length < (MAX_LITERAL_SIZE + 1); bf_length++) {
-		if (is_eol(*ch)) {
+		if (is_eol(streams, *ch)) {
 			break;
 		}
 
@@ -131,7 +132,7 @@ token Indenter::id_keyword(char *ch)
 }
 
 
-bool Indenter::is_at_sol() const
+bool Indenter::is_at_sol(StreamHandler* streams) const
 {
 	size_t pos = streams->position();
 
@@ -144,7 +145,7 @@ bool Indenter::is_at_sol() const
 		streams->prev(&ch);
 	}
 
-	if ((0 == streams->position()) || is_eol(ch)) {
+	if ((0 == streams->position()) || is_eol(streams, ch)) {
 		streams->travel_to(pos, &ch);
 		return true;
 	} else {
@@ -154,15 +155,15 @@ bool Indenter::is_at_sol() const
 }
 
 
-bool Indenter::is_eol(char ch) const
+bool Indenter::is_eol(StreamHandler* streams, char ch) const
 {
 	return (streams->eof() || ch == '\n' || ch == '\r');
 }
 
 
-void Indenter::normalize_eol(char *ch)
+void Indenter::normalize_eol(StreamHandler* streams, char *ch)
 {
-	if (!is_eol(*ch)) {
+	if (!is_eol(streams, *ch)) {
 		return;
 	}
 
@@ -186,42 +187,42 @@ void Indenter::normalize_eol(char *ch)
 
 
 // check for comment
-void Indenter::sanitize_char(char *ch)
+void Indenter::sanitize_char(StreamHandler* streams, char *ch)
 {
-	add_if_string(ch);
+	add_if_string(streams, ch);
 
 	// single line comment
 	if ((*ch == '/') && (streams->next_peek() == '/')) {
-		while (!is_eol(*ch)) {
+		while (!is_eol(streams, *ch)) {
 			streams->next(ch);
 		}
 
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 		return;
 
 	} else if ((*ch == '/') && (streams->next_peek() == '*')) { // multi-line comment
 		streams->next(ch); // add '/'
 		streams->next(ch); // add '*'
 
-		normalize_eol(ch);
+		normalize_eol(streams, ch);
 
 		while (!streams->eof() && !((*ch == '*') && (streams->next_peek() == '/'))) {
 			streams->next(ch);
-			normalize_eol(ch);
+			normalize_eol(streams, ch);
 		}
 
 		streams->next(ch); // add '*'
 		streams->next(ch); // add '/'
 
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 		return;
 	}
 
-	normalize_eol(ch);
+	normalize_eol(streams, ch);
 }
 
 
-void Indenter::add_if_string(char *ch)
+void Indenter::add_if_string(StreamHandler* streams, char *ch)
 {
 	if (0 == streams->position()) {
 		return;
@@ -233,28 +234,28 @@ void Indenter::add_if_string(char *ch)
 
 	streams->next(ch);
 	if ('"' != *ch) {
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
 	while (!streams->eof() && ('"' != *ch)) {
 		streams->next(ch);
 
 		if ('"' != *ch) {
-			sanitize_char(ch);
+			sanitize_char(streams, ch);
 		} else if ('\\' == streams->prev_peek()) {
 			streams->next(ch);
-			sanitize_char(ch);
+			sanitize_char(streams, ch);
 		}
 	}
 
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 }
 
 
-void Indenter::add_indent_if_sol(int indent_level)
+void Indenter::add_indent_if_sol(StreamHandler* streams, int indent_level)
 {
-	if (is_at_sol()) {
+	if (is_at_sol(streams)) {
 		char ch;
 
 		// trim leading white space
@@ -269,96 +270,96 @@ void Indenter::add_indent_if_sol(int indent_level)
 }
 
 
-void Indenter::next_valid_char(char *ch)
+void Indenter::next_valid_char(StreamHandler* streams, char *ch)
 {
-	if (!is_eol(*ch) && !IS_WHITE_SPACE(*ch)) {
+	if (!is_eol(streams, *ch) && !IS_WHITE_SPACE(*ch)) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
-	while (!streams->eof() && (is_eol(*ch) || IS_WHITE_SPACE(*ch))) {
+	while (!streams->eof() && (is_eol(streams, *ch) || IS_WHITE_SPACE(*ch))) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
-	add_indent_if_sol(0);
+	add_indent_if_sol(streams, 0);
 }
 
 
-void Indenter::indent_statement(int indent_level, char *ch)
+void Indenter::indent_statement(StreamHandler* streams, int indent_level, char *ch)
 {
 	// add indent if this is at the start of a line
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 
 	// keep going until you get a ";"
 	while (!streams->eof() && (';' != *ch)) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 
 	// add till the EOL
-	while (!is_eol(*ch)) {
+	while (!is_eol(streams, *ch)) {
 		streams->next(ch);
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 }
 
 
-void Indenter::indent_loops(int indent_level, char *ch)
+void Indenter::indent_loops(StreamHandler* streams, int indent_level, char *ch)
 {
 	bool done = false;
 
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 
 	// add the 1st identifying char
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 
-	token ch_token = id_keyword(ch);
+	token ch_token = id_keyword(streams, ch);
 
 	while (!streams->eof() && !done) {
 		if ((BEGIN == ch_token.id) || (FORK == ch_token.id) || (SEMICOLON == ch_token.id)) {
-			add_indentable_section(ch_token, indent_level, ch);
+			add_indentable_section(streams, ch_token, indent_level, ch);
 			done = true;
 		} else if ((TA_BLOCK == ch_token.action) || (IF == ch_token.id)) {
-			add_indentable_section(ch_token, indent_level + 1, ch);
+			add_indentable_section(streams, ch_token, indent_level + 1, ch);
 			done = true;
 		} else {
-			if (!add_indentable_section(ch_token, indent_level + 1, ch)) {
-				add_indent_if_sol(indent_level + 1);
+			if (!add_indentable_section(streams, ch_token, indent_level + 1, ch)) {
+				add_indent_if_sol(streams, indent_level + 1);
 				streams->next(ch);
-				sanitize_char(ch);
+				sanitize_char(streams, ch);
 			}
-			ch_token = id_keyword(ch);
+			ch_token = id_keyword(streams, ch);
 		}
 	}
 }
 
 
-void Indenter::indent_if(int indent_level, char *ch)
+void Indenter::indent_if(StreamHandler* streams, int indent_level, char *ch)
 {
 	bool done = false;
 
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 	indent_level++;
 
 	// add the 'i' char
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 
-	token ch_token = id_keyword(ch);
+	token ch_token = id_keyword(streams, ch);
 
 	while (!streams->eof() && !done) {
 		if ((TA_BLOCK == ch_token.action) || (SEMICOLON == ch_token.id)) {
 			if ((BEGIN == ch_token.id) || (FORK == ch_token.id)) {
-				add_indentable_section(ch_token, indent_level - 1, ch);
+				add_indentable_section(streams, ch_token, indent_level - 1, ch);
 			} else {
-				add_indentable_section(ch_token, indent_level, ch);
+				add_indentable_section(streams, ch_token, indent_level, ch);
 			}
 
 			size_t pos = streams->position();
-			next_valid_char(ch);
-			ch_token = id_keyword(ch);
+			next_valid_char(streams, ch);
+			ch_token = id_keyword(streams, ch);
 
 			if (ELSE != ch_token.id) {
 				// go back to position in stream
@@ -367,176 +368,176 @@ void Indenter::indent_if(int indent_level, char *ch)
 			}
 		} else {
 			if (ELSE == ch_token.id) {
-				add_indent_if_sol(indent_level - 1);
+				add_indent_if_sol(streams, indent_level - 1);
 				streams->travel_to(streams->position()+4, ch);
 
 				// check for "else if"
 				size_t pos = streams->position();
-				next_valid_char(ch);
-				ch_token = id_keyword(ch);
+				next_valid_char(streams, ch);
+				ch_token = id_keyword(streams, ch);
 
 				if (IF == ch_token.id) {
-					add_indent_if_sol(indent_level - 1);
+					add_indent_if_sol(streams, indent_level - 1);
 					// add the 'i' char
 					streams->next(ch);
-					sanitize_char(ch);
+					sanitize_char(streams, ch);
 				} else {
 					streams->travel_to(pos, ch);
 				}
 
-				ch_token = id_keyword(ch);
+				ch_token = id_keyword(streams, ch);
 			} else {
-				add_indent_if_sol(indent_level);
+				add_indent_if_sol(streams, indent_level);
 			}
 
-			if (!add_indentable_section(ch_token, indent_level, ch)) {
+			if (!add_indentable_section(streams, ch_token, indent_level, ch)) {
 				streams->next(ch);
-				sanitize_char(ch);
+				sanitize_char(streams, ch);
 			}
 
-			ch_token = id_keyword(ch);
+			ch_token = id_keyword(streams, ch);
 		}
 	}
 }
 
 
-void Indenter::indent_block(token end, int indent_level, char *ch)
+void Indenter::indent_block(StreamHandler* streams, token end, int indent_level, char *ch)
 {
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 	indent_level++;
 
 	streams->next(ch);
-	sanitize_char(ch);
+	sanitize_char(streams, ch);
 
-	if (is_eol(*ch) || IS_WHITE_SPACE(*ch)) {
-		next_valid_char(ch);
+	if (is_eol(streams, *ch) || IS_WHITE_SPACE(*ch)) {
+		next_valid_char(streams, ch);
 	}
 
-	token ch_token = id_keyword(ch);
+	token ch_token = id_keyword(streams, ch);
 	while (!streams->eof() && (end.id != ch_token.id)) {
-		if (!add_indentable_section(ch_token, indent_level, ch)) {
-			add_indent_if_sol(indent_level);
-			next_valid_char(ch);
+		if (!add_indentable_section(streams, ch_token, indent_level, ch)) {
+			add_indent_if_sol(streams, indent_level);
+			next_valid_char(streams, ch);
 		}
 
-		ch_token = id_keyword(ch);
+		ch_token = id_keyword(streams, ch);
 	}
 
 	if (!streams->eof()) {
 		indent_level--;
-		add_indent_if_sol(indent_level);
+		add_indent_if_sol(streams, indent_level);
 		for (unsigned int xx = 0; xx < strlen(end.literal); xx++) {
 			streams->next(ch);
 		}
-		sanitize_char(ch);
+		sanitize_char(streams, ch);
 	}
 }
 
 
-void Indenter::indent_module_bracket(int indent_level, char *ch)
+void Indenter::indent_module_bracket(StreamHandler* streams, int indent_level, char *ch)
 {
 	while ('(' != *ch) {
-		next_valid_char(ch);
+		next_valid_char(streams, ch);
 		if ('`' == *ch) {
-			add_indentable_section(id_keyword(ch), indent_level, ch);
+			add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 		}
 	}
 
 	while (')' != *ch) {
-		next_valid_char(ch);
+		next_valid_char(streams, ch);
 		if (('`' == *ch) || ('(' == *ch)) {
-			add_indentable_section(id_keyword(ch), indent_level, ch);
+			add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 		} else {
-			add_indent_if_sol(indent_level);
+			add_indent_if_sol(streams, indent_level);
 		}
 	}
 }
 
 
-void Indenter::indent_module(int indent_level, char *ch)
+void Indenter::indent_module(StreamHandler* streams, int indent_level, char *ch)
 {
-	add_indent_if_sol(indent_level);
+	add_indent_if_sol(streams, indent_level);
 	indent_level++;
 
 	while (('#' != *ch) && ('(' != *ch) && (';' != *ch)) {
-		next_valid_char(ch);
+		next_valid_char(streams, ch);
 		if ('`' == *ch) {
-			add_indentable_section(id_keyword(ch), indent_level, ch);
+			add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 		}
 	}
 
 	if (';' != *ch) {
 		if ('#' == *ch) {
-			if (is_at_sol()) {
+			if (is_at_sol(streams)) {
 				// custom indent for '#('
-				add_indent_if_sol(indent_level);
+				add_indent_if_sol(streams, indent_level);
 				streams->prev_remove();
 				streams->prev_remove();
 			}
 
-			indent_module_bracket(indent_level, ch);
+			indent_module_bracket(streams, indent_level, ch);
 
 			while ('(' != *ch) {
-				next_valid_char(ch);
+				next_valid_char(streams, ch);
 				if ('`' == *ch) {
-					add_indentable_section(id_keyword(ch), indent_level, ch);
+					add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 				}
 			}
 		}
 
 		// by this stage *ch will always be == '('
-		if (is_at_sol()) {
-			add_indent_if_sol(indent_level);
+		if (is_at_sol(streams)) {
+			add_indent_if_sol(streams, indent_level);
 			streams->prev_remove();
 		}
 
-		indent_module_bracket(indent_level, ch);
+		indent_module_bracket(streams, indent_level, ch);
 
 		// custom indent for end ');'
-		add_indent_if_sol(indent_level - 1);
+		add_indent_if_sol(streams, indent_level - 1);
 
 		// add ')' and don't stop until ';'
 		while (';' != *ch) {
-			next_valid_char(ch);
+			next_valid_char(streams, ch);
 			if ('`' == *ch) {
-				add_indentable_section(id_keyword(ch), indent_level, ch);
+				add_indentable_section(streams, id_keyword(streams, ch), indent_level, ch);
 			}
 		}
 	}
 
-	indent_block(keywords[ENDMODULE], (indent_level - 1), ch);
+	indent_block(streams, keywords[ENDMODULE], (indent_level - 1), ch);
 }
 
 
-bool Indenter::add_indentable_section(token ch_token, int indent_level, char *ch)
+bool Indenter::add_indentable_section(StreamHandler* streams, token ch_token, int indent_level, char *ch)
 {
 	bool indent_performed = true;
 
 	switch (ch_token.action) {
 	case TA_MACRO:
-		add_indent_if_sol(0);
-		next_valid_char(ch);
+		add_indent_if_sol(streams, 0);
+		next_valid_char(streams, ch);
 		break;
 	case TA_STATEMENT :
-		indent_statement(indent_level, ch);
+		indent_statement(streams, indent_level, ch);
 		streams->prev(ch);
 		break;
 	case TA_LOOP :
-		indent_loops(indent_level, ch);
+		indent_loops(streams, indent_level, ch);
 		break;
 	case TA_IF :
-		indent_if(indent_level, ch);
+		indent_if(streams, indent_level, ch);
 		break;
 	case TA_MODULE :
-		indent_module(0, ch);
+		indent_module(streams, 0, ch);
 		break;
 	case TA_GROUP:
 		switch (ch_token.id) {
 		case BRACKET_OPEN :
-			indent_block(keywords[BRACKET_CLOSE], indent_level, ch);
+			indent_block(streams, keywords[BRACKET_CLOSE], indent_level, ch);
 			break;
 		case BRACES_OPEN :
-			indent_block(keywords[BRACES_CLOSE], indent_level, ch);
+			indent_block(streams, keywords[BRACES_CLOSE], indent_level, ch);
 			break;
 		default :
 			indent_performed = false;
@@ -546,37 +547,37 @@ bool Indenter::add_indentable_section(token ch_token, int indent_level, char *ch
 	case TA_BLOCK :
 		switch (ch_token.id) {
 		case BEGIN :
-			indent_block(keywords[END], indent_level, ch);
+			indent_block(streams, keywords[END], indent_level, ch);
 			break;
 		case FORK :
-			indent_block(keywords[JOIN], indent_level, ch);
+			indent_block(streams, keywords[JOIN], indent_level, ch);
 			break;
 		case GENERATE :
-			indent_block(keywords[ENDGENERATE], indent_level, ch);
+			indent_block(streams, keywords[ENDGENERATE], indent_level, ch);
 			break;
 		case FUNCTION :
-			indent_block(keywords[ENDFUNCTION], indent_level, ch);
+			indent_block(streams, keywords[ENDFUNCTION], indent_level, ch);
 			break;
 		case PRIMITIVE :
-			indent_block(keywords[ENDPRIMITIVE], indent_level, ch);
+			indent_block(streams, keywords[ENDPRIMITIVE], indent_level, ch);
 			break;
 		case SPECIFY :
-			indent_block(keywords[ENDSPECIFY], indent_level, ch);
+			indent_block(streams, keywords[ENDSPECIFY], indent_level, ch);
 			break;
 		case TABLE :
-			indent_block(keywords[ENDTABLE], indent_level, ch);
+			indent_block(streams, keywords[ENDTABLE], indent_level, ch);
 			break;
 		case TASK :
-			indent_block(keywords[ENDTASK], indent_level, ch);
+			indent_block(streams, keywords[ENDTASK], indent_level, ch);
 			break;
 		case PRO_IFDEF :
 		case PRO_IFNDEF :
-			indent_block(keywords[PRO_ENDIF], 0, ch);
+			indent_block(streams, keywords[PRO_ENDIF], 0, ch);
 			break;
 		case CASE :
 		case CASEX :
 		case CASEZ :
-			indent_block(keywords[ENDCASE], indent_level, ch);
+			indent_block(streams, keywords[ENDCASE], indent_level, ch);
 			break;
 		default :
 			indent_performed = false;

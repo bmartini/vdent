@@ -112,7 +112,7 @@ void StreamHandler::travel_to(size_t position, char *ch)
 }
 
 
-size_t StreamHandler::position()
+size_t StreamHandler::position() const
 {
 	return sbuffer.length();
 }
